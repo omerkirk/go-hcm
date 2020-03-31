@@ -19,9 +19,7 @@ var (
 	ErrInvalidTimeToLive = errors.New("messages time-to-live is invalid")
 )
 
-// Notification specifies the predefined, user-visible key-value pairs of the
-// notification payload.
-type Notification struct {
+type notification struct {
 	Title        string `json:"title,omitempty"`
 	Body         string `json:"body,omitempty"`
 	ChannelID    string `json:"android_channel_id,omitempty"`
@@ -37,25 +35,40 @@ type Notification struct {
 	TitleLocArgs string `json:"title_loc_args,omitempty"`
 }
 
-// Message represents list of targets, options, and payload for HTTP JSON
-// messages.
-type Message struct {
+type message struct {
 	Token        []string       `json:"token,omitempty"`
 	Data         string         `json:"data,omitempty"`
-	Notification *Notification  `json:"notification,omitempty"`
-	Android      *AndroidConfig `json:"android,omitempty"`
-	Topic        string         `json:"condition,omitempty"`
+	Notification *notification  `json:"notification,omitempty"`
+	Android      *androidConfig `json:"android,omitempty"`
+	Topic        string         `json:"topic,omitempty"`
 	Condition    string         `json:"condition,omitempty"`
+}
+
+type androidConfig struct {
+	CollapseKey  string        `json:"collapse_key,omitempty"`
+	TimeToLive   string        `json:"ttl,omitempty"`
+	Notification *notification `json:"notification,omitempty"`
+}
+
+type Message struct {
+	ValidateOnly bool     `json:"validate_only"`
+	Message      *message `json:"message"`
 
 	extra map[string]interface{}
 }
 
-// Message represents list of targets, options, and payload for HTTP JSON
-// messages.
-type AndroidConfig struct {
-	CollapseKey  string        `json:"collapse_key,omitempty"`
-	TimeToLive   *uint         `json:"ttl,omitempty"`
-	Notification *Notification `json:"notification,omitempty"`
+func NewMessage(token []string, data string, ttl string, isProd bool, extra map[string]interface{}) *Message {
+	msg := message{
+		Token:   token,
+		Data:    data,
+		Android: &androidConfig{TimeToLive: ttl}}
+
+	return &Message{
+		ValidateOnly: !isProd,
+		Message:      &msg,
+		extra:        extra,
+	}
+
 }
 
 func (msg *Message) SetExtra(extra map[string]interface{}) {
@@ -73,17 +86,13 @@ func (msg *Message) Validate() error {
 	}
 
 	// validate target identifier: `to` or `condition`, or `registration_ids`
-	opCnt := strings.Count(msg.Condition, "&&") + strings.Count(msg.Condition, "||")
-	if (msg.Condition == "" || opCnt > 2) && len(msg.Token) == 0 {
+	opCnt := strings.Count(msg.Message.Condition, "&&") + strings.Count(msg.Message.Condition, "||")
+	if (msg.Message.Condition == "" || opCnt > 2) && len(msg.Message.Token) == 0 {
 		return ErrInvalidTarget
 	}
 
-	if len(msg.Token) > 1000 {
+	if len(msg.Message.Token) > 1000 {
 		return ErrToManyRegIDs
-	}
-
-	if msg.Android != nil && *msg.Android.TimeToLive > uint(2419200) {
-		return ErrInvalidTimeToLive
 	}
 	return nil
 }
