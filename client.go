@@ -115,9 +115,6 @@ func (c *Client) send(data []byte, accessToken string) (*Response, error) {
 
 	sc := resp.StatusCode()
 	if sc != http.StatusOK {
-		if sc >= http.StatusInternalServerError {
-			return nil, serverError(fmt.Sprintf("%d error: %s", sc, resp.String()))
-		}
 		return nil, fmt.Errorf("%d error: %s", sc, resp.String())
 	}
 	response := new(Response)

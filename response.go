@@ -5,7 +5,8 @@ import (
 )
 
 const (
-	RespCodeSuccess = "80000000"
+	RespCodeSuccess        = "80000000"
+	RespCodePartialSuccess = "80100000"
 )
 
 var (
