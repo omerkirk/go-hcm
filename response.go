@@ -30,38 +30,6 @@ var (
 	}
 )
 
-// connectionError represents connection errors such as timeout error, etc.
-// Implements `net.Error` interface.
-type connectionError string
-
-func (err connectionError) Error() string {
-	return string(err)
-}
-
-func (err connectionError) Temporary() bool {
-	return true
-}
-
-func (err connectionError) Timeout() bool {
-	return true
-}
-
-// serverError represents internal server errors.
-// Implements `net.Error` interface.
-type serverError string
-
-func (err serverError) Error() string {
-	return string(err)
-}
-
-func (serverError) Temporary() bool {
-	return true
-}
-
-func (serverError) Timeout() bool {
-	return false
-}
-
 // Response represents the FCM server's response to the application
 // server's sent message.
 type Response struct {

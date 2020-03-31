@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"time"
 
@@ -11,11 +12,13 @@ import (
 )
 
 const (
-	// DefaultEndpoint contains endpoint URL of FCM service.
-	DefaultEndpointFmt = "https://push-api.cloud.huawei.com/v1/%d/messages:send"
+	DefaultEndpointFmt               = "https://push-api.cloud.huawei.com/v1/%d/messages:send"
+	DefaultTimeout     time.Duration = 30 * time.Second
+)
 
-	// DefaultTimeout duration in second
-	DefaultTimeout time.Duration = 30 * time.Second
+const (
+	minBackoff = 100 * time.Millisecond
+	maxBackoff = 1 * time.Minute
 )
 
 var (
@@ -110,7 +113,7 @@ func (c *Client) send(data []byte, accessToken string) (*Response, error) {
 
 	err := c.client.DoTimeout(req, resp, c.timeout)
 	if err != nil {
-		return nil, connectionError(err.Error())
+		return nil, err
 	}
 
 	sc := resp.StatusCode()
@@ -125,4 +128,26 @@ func (c *Client) send(data []byte, accessToken string) (*Response, error) {
 	}
 
 	return response, nil
+}
+
+func retry(fn func() error, attempts int) error {
+	var attempt int
+	for {
+		err := fn()
+		if err == nil {
+			return nil
+		}
+
+		if tErr, ok := err.(net.Error); !ok || !tErr.Temporary() {
+			return err
+		}
+
+		attempt++
+		backoff := minBackoff * time.Duration(attempt*attempt)
+		if attempt > attempts || backoff > maxBackoff {
+			return err
+		}
+
+		time.Sleep(backoff)
+	}
 }
