@@ -40,12 +40,12 @@ type Notification struct {
 // Message represents list of targets, options, and payload for HTTP JSON
 // messages.
 type Message struct {
-	Token        []string               `json:"token,omitempty"`
-	Data         map[string]interface{} `json:"data,omitempty"`
-	Notification *Notification          `json:"notification,omitempty"`
-	Android      *AndroidConfig         `json:"android,omitempty"`
-	Topic        string                 `json:"condition,omitempty"`
-	Condition    string                 `json:"condition,omitempty"`
+	Token        []string       `json:"token,omitempty"`
+	Data         string         `json:"data,omitempty"`
+	Notification *Notification  `json:"notification,omitempty"`
+	Android      *AndroidConfig `json:"android,omitempty"`
+	Topic        string         `json:"condition,omitempty"`
+	Condition    string         `json:"condition,omitempty"`
 
 	extra map[string]interface{}
 }
